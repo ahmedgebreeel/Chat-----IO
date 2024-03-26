@@ -1,3 +1,4 @@
+import bcrypt from "bcryptjs";
 import User from '../models/user.model.js';
 
 export const register = async(req, res)=>{
@@ -14,6 +15,9 @@ export const register = async(req, res)=>{
         }
 
         // hash password
+        const salt = bcrypt.genSalt(10);
+        const hashedPassword = bcrypt.hash(password, salt);
+
         // https://avatar-placeholder.iran.liara.run/
 
         const boyProfilePic = `https://avatar.iran.liara.run/public/boy?username=${username}`;
@@ -22,20 +26,26 @@ export const register = async(req, res)=>{
         const newUser = new User({
             fullName,
             username,
-            password,
+            password: hashedPassword,
             gender,
             profilePic : gender === 'male' ? boyProfilePic : girlProfilePic
         })
 
-        await newUser.save();
+        if (newUser){
 
-        res.status(201).json({
-            _id: newUser._id,
-            fullName: newUser.fullName,
-            username: newUser.username,
-            profilePic: newUser.profilePic,
-        })
+            await newUser.save();
 
+            res.status(201).json({
+                _id: newUser._id,
+                fullName: newUser.fullName,
+                username: newUser.username,
+                profilePic: newUser.profilePic,
+            })
+    
+        }else {
+            res.status(400).json({error: "invalid user data"})
+        }
+       
 
     } catch (error) {
         console.log("error in register controller", error.message);
